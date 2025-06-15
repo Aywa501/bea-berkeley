@@ -31,14 +31,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { title, description, deadline, link } = body
+    const { type, url } = body
 
     const form = await prisma.recruitmentForm.create({
       data: {
-        title,
-        description,
-        deadline: new Date(deadline),
-        link,
+        title: type === "interest" ? "Interest Form" : "Application Form",
+        description: type === "interest" ? "Interest Form for BEA" : "Application Form for BEA",
+        deadline: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Set deadline to 1 year from now
+        link: url,
       },
     })
 

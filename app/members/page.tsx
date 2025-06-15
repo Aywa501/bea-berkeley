@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -50,8 +50,16 @@ export default function MembersHomePage() {
                 </Link>
               )}
             </div>
-            <div className="text-sm text-muted-foreground">
-              {session.user.name || session.user.email}
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-muted-foreground">
+                {session.user.name || session.user.email}
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
           </nav>
         </div>

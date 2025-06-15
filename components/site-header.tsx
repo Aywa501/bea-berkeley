@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion"
 export function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -16,8 +18,18 @@ export function SiteHeader() {
       setIsScrolled(window.scrollY > 10)
     }
 
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false)
+      }
+    }
+
     window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
   }, [])
 
   const isActive = (path: string) => {
@@ -26,7 +38,7 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "bg-white shadow-md py-2" : "bg-transparent py-4"}`}
+      className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-2"
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
@@ -48,19 +60,15 @@ export function SiteHeader() {
               href="/"
               className={`text-sm font-medium transition-colors relative ${
                 isActive("/")
-                  ? isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-gray-800 hover:text-blue-600"
-                    : "text-white/90 hover:text-white"
+                  ? "text-blue-600"
+                  : "text-gray-800 hover:text-blue-600"
               }`}
             >
               <span>Home</span>
               {isActive("/") && (
                 <motion.span
                   layoutId="underline"
-                  className={`absolute left-0 top-full h-0.5 w-full ${isScrolled ? "bg-blue-600" : "bg-white"}`}
+                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
                 />
               )}
             </Link>
@@ -68,19 +76,15 @@ export function SiteHeader() {
               href="/about"
               className={`text-sm font-medium transition-colors relative ${
                 isActive("/about")
-                  ? isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-gray-800 hover:text-blue-600"
-                    : "text-white/90 hover:text-white"
+                  ? "text-blue-600"
+                  : "text-gray-800 hover:text-blue-600"
               }`}
             >
               <span>About</span>
               {isActive("/about") && (
                 <motion.span
                   layoutId="underline"
-                  className={`absolute left-0 top-full h-0.5 w-full ${isScrolled ? "bg-blue-600" : "bg-white"}`}
+                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
                 />
               )}
             </Link>
@@ -88,39 +92,15 @@ export function SiteHeader() {
               href="/speakers"
               className={`text-sm font-medium transition-colors relative ${
                 isActive("/speakers")
-                  ? isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-gray-800 hover:text-blue-600"
-                    : "text-white/90 hover:text-white"
+                  ? "text-blue-600"
+                  : "text-gray-800 hover:text-blue-600"
               }`}
             >
               <span>Speakers</span>
               {isActive("/speakers") && (
                 <motion.span
                   layoutId="underline"
-                  className={`absolute left-0 top-full h-0.5 w-full ${isScrolled ? "bg-blue-600" : "bg-white"}`}
-                />
-              )}
-            </Link>
-            <Link
-              href="/bwim"
-              className={`text-sm font-medium transition-colors relative ${
-                isActive("/bwim")
-                  ? isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-gray-800 hover:text-blue-600"
-                    : "text-white/90 hover:text-white"
-              }`}
-            >
-              <span>BWIM</span>
-              {isActive("/bwim") && (
-                <motion.span
-                  layoutId="underline"
-                  className={`absolute left-0 top-full h-0.5 w-full ${isScrolled ? "bg-blue-600" : "bg-white"}`}
+                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
                 />
               )}
             </Link>
@@ -128,28 +108,74 @@ export function SiteHeader() {
               href="/exec-board"
               className={`text-sm font-medium transition-colors relative ${
                 isActive("/exec-board")
-                  ? isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-gray-800 hover:text-blue-600"
-                    : "text-white/90 hover:text-white"
+                  ? "text-blue-600"
+                  : "text-gray-800 hover:text-blue-600"
               }`}
             >
               <span>Exec Board</span>
               {isActive("/exec-board") && (
                 <motion.span
                   layoutId="underline"
-                  className={`absolute left-0 top-full h-0.5 w-full ${isScrolled ? "bg-blue-600" : "bg-white"}`}
+                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
                 />
               )}
             </Link>
             <Link
               href="/join-us"
-              className={`bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 transition-colors`}
+              className={`text-sm font-medium transition-colors relative ${
+                isActive("/join-us")
+                  ? "text-blue-600"
+                  : "text-gray-800 hover:text-blue-600"
+              }`}
             >
-              Join Us
+              <span>Join Us</span>
+              {isActive("/join-us") && (
+                <motion.span
+                  layoutId="underline"
+                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
+                />
+              )}
             </Link>
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className={`text-sm font-medium transition-colors relative ${
+                  isMoreMenuOpen ? "text-blue-600" : "text-gray-800 hover:text-blue-600"
+                }`}
+              >
+                More
+              </button>
+              {isMoreMenuOpen && (
+                <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
+                    <Link
+                      href="/past-clients"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                    >
+                      Past Clients
+                    </Link>
+                    <Link
+                      href="/ongoing-research"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                    >
+                      Ongoing Research
+                    </Link>
+                    <Link
+                      href="/bwim"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                    >
+                      BWIM
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -159,7 +185,7 @@ export function SiteHeader() {
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              className={`w-6 h-6 ${isScrolled ? "text-gray-800" : "text-white"}`}
+              className="w-6 h-6 text-gray-800"
             >
               {isMobileMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -188,74 +214,26 @@ export function SiteHeader() {
               >
                 <Link
                   href="/"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
+                  className={`text-sm font-medium px-4 py-2 ${
+                    isActive("/") ? "text-blue-600 bg-blue-50" : "text-gray-800"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Home
                 </Link>
                 <Link
-                  href="/about"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/about")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
-                </Link>
-                <Link
                   href="/speakers"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/speakers")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
+                  className={`text-sm font-medium px-4 py-2 ${
+                    isActive("/speakers") ? "text-blue-600 bg-blue-50" : "text-gray-800"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Speakers
                 </Link>
                 <Link
-                  href="/bwim"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/bwim")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  BWIM
-                </Link>
-                <Link
                   href="/exec-board"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/exec-board")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
+                  className={`text-sm font-medium px-4 py-2 ${
+                    isActive("/exec-board") ? "text-blue-600 bg-blue-50" : "text-gray-800"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -263,19 +241,56 @@ export function SiteHeader() {
                 </Link>
                 <Link
                   href="/join-us"
-                  className={`text-sm font-medium px-4 py-2  ${
-                    isActive("/join-us")
-                      ? isScrolled
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-white bg-white/10"
-                      : isScrolled
-                        ? "text-gray-800"
-                        : "text-white"
+                  className={`text-sm font-medium px-4 py-2 ${
+                    isActive("/join-us") ? "text-blue-600 bg-blue-50" : "text-gray-800"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Join Us
                 </Link>
+                <div className="px-4 py-2">
+                  <button
+                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                    className={`text-sm font-medium ${
+                      isMoreMenuOpen ? "text-blue-600" : "text-gray-800"
+                    }`}
+                  >
+                    More
+                  </button>
+                  <AnimatePresence>
+                    {isMoreMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="mt-2 space-y-2 pl-4 overflow-hidden"
+                      >
+                        <Link
+                          href="/past-clients"
+                          className="block text-sm text-gray-700 hover:text-blue-600"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Past Clients
+                        </Link>
+                        <Link
+                          href="/ongoing-research"
+                          className="block text-sm text-gray-700 hover:text-blue-600"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Ongoing Research
+                        </Link>
+                        <Link
+                          href="/bwim"
+                          className="block text-sm text-gray-700 hover:text-blue-600"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          BWIM
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
             </motion.nav>
           )}

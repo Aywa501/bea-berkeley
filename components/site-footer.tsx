@@ -100,11 +100,6 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-white transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
                 <Link href="/speakers" className="text-gray-400 hover:text-white transition-colors">
                   Speakers
                 </Link>
@@ -114,24 +109,9 @@ export function SiteFooter() {
                   Join Us
                 </Link>
               </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Resources</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/bwim" className="text-gray-400 hover:text-white transition-colors">
-                  BWIM
-                </Link>
-              </li>
               <li>
                 <Link href="/exec-board" className="text-gray-400 hover:text-white transition-colors">
                   Exec Board
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="text-gray-400 hover:text-white transition-colors">
-                  Events
                 </Link>
               </li>
             </ul>
