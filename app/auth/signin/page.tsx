@@ -31,7 +31,7 @@ export default function SignIn() {
         return
       }
 
-      router.push("/member-portal")
+      router.push("/members")
       router.refresh()
     } catch (error) {
       setError("An error occurred. Please try again.")
