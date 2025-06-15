@@ -1,0 +1,19 @@
+import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server"
+
+export async function GET() {
+  try {
+    const events = await prisma.recruitmentEvent.findMany({
+      orderBy: {
+        date: 'desc'
+      }
+    })
+    return NextResponse.json({ events })
+  } catch (error) {
+    console.error("Error fetching recruitment events:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch recruitment events" },
+      { status: 500 }
+    )
+  }
+} 

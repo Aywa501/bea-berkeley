@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MEMBER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          UserRole  @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ExecBoardMember {
+  id          String   @id @default(cuid())
+  name        String
+  position    String
+  description String
+  linkedin    String?
+  coffeeChat  String?
+  image       Bytes?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Speaker {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  description String
+  image       Bytes?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RecruitmentEvent {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  description String
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RecruitmentForm {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  deadline    DateTime
+  link        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+} 

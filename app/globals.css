@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 250, 250, 252;
+  --font-sans: var(--font-inter);
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Geometric styles - override border-radius throughout the site */
+.btn,
+button,
+a[href],
+input,
+select,
+textarea,
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-full {
+  border-radius: 0 !important;
+}
+
+/* Ensure all cards and sections have sharp corners */
+.card,
+.shadow-lg,
+.shadow-xl,
+.shadow-md,
+.shadow-sm,
+.border,
+.overflow-hidden {
+  border-radius: 0 !important;
+}
+
+/* Remove rounded corners from geometric shapes */
+.rounded-full {
+  border-radius: 0 !important;
+}
+

@@ -1,0 +1,180 @@
+'use client'
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+
+interface Speaker {
+  id: string
+  name: string
+  title: string
+  description: string
+  image?: Buffer
+}
+
+export function SpeakersPanel() {
+  const [speakers, setSpeakers] = useState<Speaker[]>([])
+  const [formData, setFormData] = useState({
+    name: "",
+    title: "",
+    description: "",
+    image: null as File | null,
+  })
+
+  useEffect(() => {
+    fetchSpeakers()
+  }, [])
+
+  const fetchSpeakers = async () => {
+    try {
+      const response = await fetch("/api/admin/speakers")
+      const data = await response.json()
+      setSpeakers(data.speakers)
+    } catch (error) {
+      console.error("Error fetching speakers:", error)
+      toast.error("Failed to fetch speakers")
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const formDataToSend = new FormData()
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null) {
+        formDataToSend.append(key, value)
+      }
+    })
+
+    try {
+      const response = await fetch("/api/admin/speakers", {
+        method: "POST",
+        body: formDataToSend,
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create speaker")
+      }
+
+      toast.success("Speaker created successfully")
+      setFormData({
+        name: "",
+        title: "",
+        description: "",
+        image: null,
+      })
+      fetchSpeakers()
+    } catch (error) {
+      console.error("Error creating speaker:", error)
+      toast.error("Failed to create speaker")
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/speakers?id=${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete speaker")
+      }
+
+      toast.success("Speaker deleted successfully")
+      fetchSpeakers()
+    } catch (error) {
+      console.error("Error deleting speaker:", error)
+      toast.error("Failed to delete speaker")
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData({ ...formData, image: e.target.files[0] })
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="image">Image</Label>
+          <Input
+            id="image"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            required
+          />
+        </div>
+        <Button type="submit">Add Speaker</Button>
+      </form>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {speakers.map((speaker) => (
+                <TableRow key={speaker.id}>
+                  <TableCell>{speaker.name}</TableCell>
+                  <TableCell>{speaker.title}</TableCell>
+                  <TableCell>{speaker.description}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(speaker.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+} 
