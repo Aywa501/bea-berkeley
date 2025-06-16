@@ -75,12 +75,18 @@ export const authOptions: NextAuthOptions = {
       })
 
       if (!existingUser) {
+        // List of admin emails
+        const adminEmails = [
+          "chouchou@berkeley.edu",
+          // Add more admin emails here
+        ]
+
         await prisma.user.create({
           data: {
             email: user.email,
             name: user.name || "",
             password: "", // Required by schema but not used with Google auth
-            role: UserRole.MEMBER,
+            role: adminEmails.includes(user.email) ? UserRole.ADMIN : UserRole.MEMBER,
           },
         })
       }

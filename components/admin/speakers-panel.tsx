@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 interface Speaker {
   id: string
@@ -18,6 +19,7 @@ interface Speaker {
 }
 
 export function SpeakersPanel() {
+  const { data: session } = useSession()
   const [speakers, setSpeakers] = useState<Speaker[]>([])
   const [formData, setFormData] = useState({
     name: "",
@@ -27,12 +29,15 @@ export function SpeakersPanel() {
   })
 
   useEffect(() => {
+    console.log("Current session in SpeakersPanel:", session)
     fetchSpeakers()
-  }, [])
+  }, [session])
 
   const fetchSpeakers = async () => {
     try {
-      const response = await fetch("/api/admin/speakers")
+      const response = await fetch("/api/admin/speakers", {
+        credentials: "include"
+      })
       const data = await response.json()
       setSpeakers(data.speakers)
     } catch (error) {
@@ -43,6 +48,7 @@ export function SpeakersPanel() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submitting form with session:", session)
     const formDataToSend = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null) {
@@ -53,11 +59,13 @@ export function SpeakersPanel() {
     try {
       const response = await fetch("/api/admin/speakers", {
         method: "POST",
+        credentials: "include",
         body: formDataToSend,
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create speaker")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create speaker")
       }
 
       toast.success("Speaker created successfully")
@@ -70,7 +78,7 @@ export function SpeakersPanel() {
       fetchSpeakers()
     } catch (error) {
       console.error("Error creating speaker:", error)
-      toast.error("Failed to create speaker")
+      toast.error(error instanceof Error ? error.message : "Failed to create speaker")
     }
   }
 
@@ -78,17 +86,19 @@ export function SpeakersPanel() {
     try {
       const response = await fetch(`/api/admin/speakers?id=${id}`, {
         method: "DELETE",
+        credentials: "include"
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete speaker")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete speaker")
       }
 
       toast.success("Speaker deleted successfully")
       fetchSpeakers()
     } catch (error) {
       console.error("Error deleting speaker:", error)
-      toast.error("Failed to delete speaker")
+      toast.error(error instanceof Error ? error.message : "Failed to delete speaker")
     }
   }
 

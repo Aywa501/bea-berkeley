@@ -8,7 +8,14 @@ export async function GET() {
         position: 'asc'
       }
     })
-    return NextResponse.json({ execMembers: members })
+
+    // Transform the data to include imageUrl
+    const transformedMembers = members.map(member => ({
+      ...member,
+      imageUrl: member.image ? `/api/images/${member.id}` : null
+    }))
+
+    return NextResponse.json({ execMembers: transformedMembers })
   } catch (error) {
     console.error("Error fetching executive board:", error)
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { PrismaClient } from "@prisma/client"
-import { authOptions } from "../../auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 
 const prisma = new PrismaClient()
 
@@ -25,10 +25,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
+    console.log("Session in POST /api/admin/exec-board:", session)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session) {
+      console.log("No session found")
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "No session found" },
+        { status: 401 }
+      )
+    }
+
+    if (session.user.role !== "ADMIN") {
+      console.log("User is not admin:", session.user)
+      return NextResponse.json(
+        { error: "User is not admin" },
         { status: 401 }
       )
     }

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 interface RecruitmentEvent {
   id: string
@@ -18,6 +19,7 @@ interface RecruitmentEvent {
 }
 
 export function RecruitmentPanel() {
+  const { data: session } = useSession()
   const [events, setEvents] = useState<RecruitmentEvent[]>([])
   const [formData, setFormData] = useState({
     title: "",
@@ -27,12 +29,15 @@ export function RecruitmentPanel() {
   })
 
   useEffect(() => {
+    console.log("Current session in RecruitmentPanel:", session)
     fetchEvents()
-  }, [])
+  }, [session])
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch("/api/admin/recruitment")
+      const response = await fetch("/api/admin/recruitment", {
+        credentials: "include"
+      })
       const data = await response.json()
       setEvents(data.events)
     } catch (error) {
@@ -43,10 +48,12 @@ export function RecruitmentPanel() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submitting form with session:", session)
 
     try {
       const response = await fetch("/api/admin/recruitment", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -54,7 +61,8 @@ export function RecruitmentPanel() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create event")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create event")
       }
 
       toast.success("Recruitment event created successfully")
@@ -67,7 +75,7 @@ export function RecruitmentPanel() {
       fetchEvents()
     } catch (error) {
       console.error("Error creating event:", error)
-      toast.error("Failed to create recruitment event")
+      toast.error(error instanceof Error ? error.message : "Failed to create recruitment event")
     }
   }
 
@@ -75,17 +83,19 @@ export function RecruitmentPanel() {
     try {
       const response = await fetch(`/api/admin/recruitment?id=${id}`, {
         method: "DELETE",
+        credentials: "include"
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete event")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete event")
       }
 
       toast.success("Recruitment event deleted successfully")
       fetchEvents()
     } catch (error) {
       console.error("Error deleting event:", error)
-      toast.error("Failed to delete recruitment event")
+      toast.error(error instanceof Error ? error.message : "Failed to delete recruitment event")
     }
   }
 

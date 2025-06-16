@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import { User } from "lucide-react"
 
 interface ExecBoardMember {
   id: string
@@ -20,6 +23,7 @@ interface ExecBoardMember {
 }
 
 export function ExecBoardPanel() {
+  const { data: session } = useSession()
   const [members, setMembers] = useState<ExecBoardMember[]>([])
   const [selectedMember, setSelectedMember] = useState<ExecBoardMember | null>(null)
   const [formData, setFormData] = useState({
@@ -32,12 +36,15 @@ export function ExecBoardPanel() {
   })
 
   useEffect(() => {
+    console.log("Current session in ExecBoardPanel:", session)
     fetchMembers()
-  }, [])
+  }, [session])
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("/api/admin/exec-board")
+      const response = await fetch("/api/admin/exec-board", {
+        credentials: "include"
+      })
       const data = await response.json()
       setMembers(data.execMembers)
     } catch (error) {
@@ -48,6 +55,7 @@ export function ExecBoardPanel() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submitting form with session:", session)
     const formDataToSend = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null) {
@@ -58,11 +66,13 @@ export function ExecBoardPanel() {
     try {
       const response = await fetch("/api/admin/exec-board", {
         method: "POST",
+        credentials: "include",
         body: formDataToSend,
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create member")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create member")
       }
 
       toast.success("Executive board member created successfully")
@@ -77,7 +87,7 @@ export function ExecBoardPanel() {
       fetchMembers()
     } catch (error) {
       console.error("Error creating member:", error)
-      toast.error("Failed to create executive board member")
+      toast.error(error instanceof Error ? error.message : "Failed to create executive board member")
     }
   }
 
@@ -176,6 +186,7 @@ export function ExecBoardPanel() {
                 <TableHead>Name</TableHead>
                 <TableHead>Position</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -185,6 +196,22 @@ export function ExecBoardPanel() {
                   <TableCell>{member.name}</TableCell>
                   <TableCell>{member.position}</TableCell>
                   <TableCell>{member.description}</TableCell>
+                  <TableCell>
+                    <div className="relative w-32 h-32">
+                      {member.image ? (
+                        <Image
+                          src={`/api/images/${member.id}`}
+                          alt={member.name}
+                          fill
+                          className="object-cover rounded-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                          <User className="w-16 h-16 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="destructive"
