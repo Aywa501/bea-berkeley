@@ -1,7 +1,4 @@
-'use client'
-
-import { useState, useEffect } from "react"
-import { DetailModal } from "@/components/detail-modal"
+import { prisma } from "@/lib/prisma"
 
 interface RecruitmentEvent {
   id: string
@@ -13,64 +10,40 @@ interface RecruitmentEvent {
 
 interface RecruitmentForm {
   id: string
-  type: string
-  url: string
+  title: string
+  description: string
+  deadline: Date
+  link: string
 }
 
-export default function JoinUsPage() {
-  const [events, setEvents] = useState<RecruitmentEvent[]>([])
-  const [forms, setForms] = useState<RecruitmentForm[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<RecruitmentEvent | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [eventsRes, formsRes] = await Promise.all([
-          fetch("/api/recruitment"),
-          fetch("/api/recruitment/forms")
-        ])
-
-        if (!eventsRes.ok || !formsRes.ok) {
-          throw new Error("Failed to fetch data")
+async function getRecruitmentData() {
+  try {
+    const [events, forms] = await Promise.all([
+      prisma.recruitmentEvent.findMany({
+        orderBy: {
+          date: 'desc'
         }
+      }),
+      prisma.recruitmentForm.findMany({
+        orderBy: {
+          deadline: "asc",
+        },
+      })
+    ])
 
-        const [eventsData, formsData] = await Promise.all([
-          eventsRes.json(),
-          formsRes.json()
-        ])
-
-        if (eventsData.error || formsData.error) {
-          throw new Error(eventsData.error || formsData.error)
-        }
-
-        setEvents(eventsData.events || [])
-        setForms(formsData.forms || [])
-      } catch (err) {
-        console.error("Error fetching data:", err)
-        setError(err instanceof Error ? err.message : "Failed to load data")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  const openModal = (event: RecruitmentEvent) => {
-    setSelectedEvent(event)
-    setIsModalOpen(true)
+    return { events, forms }
+  } catch (error) {
+    console.error("Error fetching recruitment data:", error)
+    return { events: [], forms: [] }
   }
+}
 
-  const closeModal = () => {
-    setIsModalOpen(false)
-    setSelectedEvent(null)
-  }
+export default async function JoinUsPage() {
+  const { events, forms } = await getRecruitmentData()
 
   const getFormUrl = (type: string) => {
-    return forms.find(form => form.type === type)?.url || "#"
+    const form = forms.find(form => form.title.toLowerCase().includes(type.toLowerCase()))
+    return form?.link || "#"
   }
 
   return (
@@ -115,16 +88,7 @@ export default function JoinUsPage() {
 
       <section className="py-16 px-4 md:px-8">
         <div className="max-w-6xl mx-auto">
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-600 mb-4">Error: {error}</p>
-              <p className="text-gray-600">Please try again later or contact the administrator.</p>
-            </div>
-          ) : events.length === 0 ? (
+          {events.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">No recruitment events found.</p>
             </div>
@@ -160,12 +124,12 @@ export default function JoinUsPage() {
                           <p className="text-gray-600 mb-2">{event.location}</p>
                         )}
                         <p className="text-gray-700 mb-4">{event.description}</p>
-                        <button
+                        <a
                           className="text-sm text-blue-600 hover:text-blue-800"
-                          onClick={() => openModal(event)}
+                          href={`/recruitment/${event.id}`}
                         >
                           Read more
-                        </button>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -175,19 +139,6 @@ export default function JoinUsPage() {
           )}
         </div>
       </section>
-
-      {/* Detail Modal */}
-      {selectedEvent && (
-        <DetailModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          title={selectedEvent.title}
-          subtitle={`${new Date(selectedEvent.date).toLocaleDateString()}${
-            selectedEvent.location ? ` at ${selectedEvent.location}` : ""
-          }`}
-          content={selectedEvent.description}
-        />
-      )}
     </main>
   )
 }

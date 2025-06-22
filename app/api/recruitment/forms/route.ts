@@ -10,7 +10,10 @@ export async function GET() {
         deadline: "asc",
       },
     })
-    return NextResponse.json(forms)
+    
+    const response = NextResponse.json(forms)
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching forms:", error)
     return NextResponse.json(

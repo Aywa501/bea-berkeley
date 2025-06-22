@@ -15,7 +15,7 @@ interface Speaker {
   name: string
   title: string
   description: string
-  image?: Buffer
+  imageUrl?: string
 }
 
 export function SpeakersPanel() {

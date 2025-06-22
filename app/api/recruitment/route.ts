@@ -8,7 +8,10 @@ export async function GET() {
         date: 'desc'
       }
     })
-    return NextResponse.json({ events })
+    
+    const response = NextResponse.json({ events })
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching recruitment events:", error)
     return NextResponse.json(

@@ -19,7 +19,7 @@ interface ExecBoardMember {
   description: string
   linkedin?: string
   coffeeChat?: string
-  image?: Buffer
+  imageUrl?: string
 }
 
 export function ExecBoardPanel() {
@@ -198,9 +198,9 @@ export function ExecBoardPanel() {
                   <TableCell>{member.description}</TableCell>
                   <TableCell>
                     <div className="relative w-32 h-32">
-                      {member.image ? (
+                      {member.imageUrl ? (
                         <Image
-                          src={`/api/images/${member.id}`}
+                          src={member.imageUrl}
                           alt={member.name}
                           fill
                           className="object-cover rounded-full"
