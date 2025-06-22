@@ -1,6 +1,10 @@
 import Image from "next/image"
 import { LinkedInIcon } from "@/components/icons/linkedin-icon"
 import { CoffeeIcon } from "@/components/icons/coffee-icon"
+import { prisma } from "@/lib/prisma"
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 interface ExecMember {
   id: string
@@ -14,16 +18,19 @@ interface ExecMember {
 
 async function getExecBoardMembers(): Promise<ExecMember[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/exec-board`, {
-      next: { revalidate: 86400 } // Cache for 24 hours
+    const members = await prisma.execBoardMember.findMany({
+      orderBy: {
+        order: 'asc'
+      }
     })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch executive board members')
-    }
-    
-    const data = await response.json()
-    return data.execMembers || []
+
+    // Transform the data to include imageUrl
+    const transformedMembers = members.map(member => ({
+      ...member,
+      imageUrl: member.imageUrl
+    }))
+
+    return transformedMembers
   } catch (error) {
     console.error("Error fetching executive board:", error)
     return []

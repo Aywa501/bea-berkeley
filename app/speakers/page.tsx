@@ -1,4 +1,8 @@
 import Image from "next/image"
+import { prisma } from "@/lib/prisma"
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 interface Speaker {
   id: string
@@ -12,16 +16,19 @@ interface Speaker {
 
 async function getSpeakers(): Promise<Speaker[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/speakers`, {
-      next: { revalidate: 86400 } // Cache for 24 hours
+    const speakers = await prisma.speaker.findMany({
+      orderBy: {
+        order: 'asc'
+      }
     })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch speakers')
-    }
-    
-    const data = await response.json()
-    return data.speakers || []
+
+    // Transform the data to include imageUrl
+    const transformedSpeakers = speakers.map(speaker => ({
+      ...speaker,
+      imageUrl: speaker.imageUrl
+    }))
+
+    return transformedSpeakers
   } catch (error) {
     console.error("Error fetching speakers:", error)
     return []
