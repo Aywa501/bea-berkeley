@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { PrismaClient } from "@prisma/client"
-import { authOptions } from "../../auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
+import { put } from '@vercel/blob'
 
 const prisma = new PrismaClient()
 
@@ -12,7 +13,10 @@ export async function GET() {
         createdAt: "desc",
       },
     })
-    return NextResponse.json({ speakers })
+    
+    const response = NextResponse.json({ speakers })
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching speakers:", error)
     return NextResponse.json(
@@ -46,14 +50,17 @@ export async function POST(request: Request) {
       )
     }
 
-    const imageBuffer = Buffer.from(await imageFile.arrayBuffer())
+    // Upload image to Vercel Blob
+    const blob = await put(`speakers/${Date.now()}-${imageFile.name}`, imageFile, {
+      access: 'public',
+    })
 
     const speaker = await prisma.speaker.create({
       data: {
         name,
         title,
         description,
-        image: imageBuffer,
+        imageUrl: blob.url,
       },
     })
 

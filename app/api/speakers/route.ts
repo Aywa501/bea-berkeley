@@ -9,13 +9,15 @@ export async function GET() {
       }
     })
 
-    // Transform the data to include imageUrl
+    // Transform the data to include imageUrl (now directly from the database)
     const transformedSpeakers = speakers.map(speaker => ({
       ...speaker,
-      imageUrl: speaker.image ? `/api/images/${speaker.id}` : null
+      imageUrl: speaker.imageUrl
     }))
 
-    return NextResponse.json({ speakers: transformedSpeakers })
+    const response = NextResponse.json({ speakers: transformedSpeakers })
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching speakers:", error)
     return NextResponse.json(

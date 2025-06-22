@@ -9,13 +9,15 @@ export async function GET() {
       }
     })
 
-    // Transform the data to include imageUrl
+    // Transform the data to include imageUrl (now directly from the database)
     const transformedMembers = members.map(member => ({
       ...member,
-      imageUrl: member.image ? `/api/images/${member.id}` : null
+      imageUrl: member.imageUrl
     }))
 
-    return NextResponse.json({ execMembers: transformedMembers })
+    const response = NextResponse.json({ execMembers: transformedMembers })
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching executive board:", error)
     return NextResponse.json(

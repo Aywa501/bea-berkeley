@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { PrismaClient } from "@prisma/client"
 import { authOptions } from "@/lib/auth"
+import { put } from '@vercel/blob'
 
 const prisma = new PrismaClient()
 
@@ -12,7 +13,10 @@ export async function GET() {
         createdAt: "desc",
       },
     })
-    return NextResponse.json({ execMembers })
+    
+    const response = NextResponse.json({ execMembers })
+    response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
+    return response
   } catch (error) {
     console.error("Error fetching exec board members:", error)
     return NextResponse.json(
@@ -58,7 +62,10 @@ export async function POST(request: Request) {
       )
     }
 
-    const imageBuffer = Buffer.from(await imageFile.arrayBuffer())
+    // Upload image to Vercel Blob
+    const blob = await put(`exec-board/${Date.now()}-${imageFile.name}`, imageFile, {
+      access: 'public',
+    })
 
     const execMember = await prisma.execBoardMember.create({
       data: {
@@ -67,7 +74,7 @@ export async function POST(request: Request) {
         description,
         linkedin,
         coffeeChat,
-        image: imageBuffer,
+        imageUrl: blob.url,
       },
     })
 

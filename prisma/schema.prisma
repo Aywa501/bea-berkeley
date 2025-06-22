@@ -32,7 +32,7 @@ model ExecBoardMember {
   description String
   linkedin    String?
   coffeeChat  String?
-  image       Bytes?
+  imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -41,8 +41,10 @@ model Speaker {
   id          String   @id @default(cuid())
   name        String
   title       String
+  company     String
   description String
-  image       Bytes?
+  linkedin    String?
+  imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

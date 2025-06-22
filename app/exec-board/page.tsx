@@ -1,10 +1,7 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import Image from "next/image"
-import { DetailModal } from "@/components/detail-modal"
 import { LinkedInIcon } from "@/components/icons/linkedin-icon"
 import { CoffeeIcon } from "@/components/icons/coffee-icon"
+import { prisma } from "@/lib/prisma"
 
 interface ExecMember {
   id: string
@@ -16,50 +13,26 @@ interface ExecMember {
   imageUrl: string | null
 }
 
-export default function ExecBoardPage() {
-  const [execMembers, setExecMembers] = useState<ExecMember[]>([])
-  const [loading, setLoading] = useState(true)
-  const [imageError, setImageError] = useState<Record<number, boolean>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [selectedMember, setSelectedMember] = useState<ExecMember | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
-  useEffect(() => {
-    const fetchExecBoard = async () => {
-      try {
-        const response = await fetch("/api/exec-board")
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`)
-        }
-        const data = await response.json()
-        if (data.error) {
-          throw new Error(data.error)
-        }
-        setExecMembers(data.execMembers || [])
-      } catch (err) {
-        console.error("Error fetching executive board:", err)
-        setError(err instanceof Error ? err.message : "Failed to load executive board")
-      } finally {
-        setLoading(false)
+async function getExecBoardMembers(): Promise<ExecMember[]> {
+  try {
+    const members = await prisma.execBoardMember.findMany({
+      orderBy: {
+        position: 'asc'
       }
-    }
+    })
 
-    fetchExecBoard()
-  }, [])
-
-  const handleImageError = (index: number) => {
-    setImageError((prev) => ({ ...prev, [index]: true }))
+    return members.map(member => ({
+      ...member,
+      imageUrl: member.imageUrl
+    }))
+  } catch (error) {
+    console.error("Error fetching executive board:", error)
+    return []
   }
+}
 
-  const openModal = (member: ExecMember) => {
-    setSelectedMember(member)
-    setIsModalOpen(true)
-  }
-
-  const closeModal = () => {
-    setIsModalOpen(false)
-    setSelectedMember(null)
-  }
+export default async function ExecBoardPage() {
+  const execMembers = await getExecBoardMembers()
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -75,16 +48,7 @@ export default function ExecBoardPage() {
 
       <section className="py-16 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-600 mb-4">Error: {error}</p>
-              <p className="text-gray-600">Please try again later or contact the administrator.</p>
-            </div>
-          ) : execMembers.length === 0 ? (
+          {execMembers.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">No executive board members found.</p>
             </div>
@@ -96,20 +60,13 @@ export default function ExecBoardPage() {
                   className="bg-white border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all"
                 >
                   <div className="aspect-square relative bg-gray-100">
-                    {imageError[index] ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500">
-                        <span className="text-lg font-medium">{member.name}</span>
-                      </div>
-                    ) : (
-                      <Image
-                        src={member.imageUrl || "/placeholder.svg?height=400&width=400"}
-                        alt={member.name}
-                        fill
-                        className="object-cover object-center"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        onError={() => handleImageError(index)}
-                      />
-                    )}
+                    <Image
+                      src={member.imageUrl || "/placeholder.svg?height=400&width=400"}
+                      alt={member.name}
+                      fill
+                      className="object-cover object-center"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
                   </div>
 
                   <div className="p-6">
@@ -149,9 +106,9 @@ export default function ExecBoardPage() {
                         )}
                       </div>
 
-                      <button className="text-sm text-blue-600 hover:text-blue-800" onClick={() => openModal(member)}>
+                      <a className="text-sm text-blue-600 hover:text-blue-800" href={`/exec-board/${member.id}`}>
                         Read more
-                      </button>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -160,22 +117,6 @@ export default function ExecBoardPage() {
           )}
         </div>
       </section>
-
-      {/* Detail Modal */}
-      {selectedMember && (
-        <DetailModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          title={selectedMember.name}
-          subtitle={selectedMember.position}
-          content={selectedMember.description}
-          image={selectedMember.imageUrl || undefined}
-          links={{
-            linkedin: selectedMember.linkedin || undefined,
-            coffeeChat: selectedMember.coffeeChat || undefined,
-          }}
-        />
-      )}
     </main>
   )
 }
