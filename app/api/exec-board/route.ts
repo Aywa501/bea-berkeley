@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const members = await prisma.execBoardMember.findMany({
       orderBy: {
-        position: 'asc'
+        order: 'asc'
       }
     })
 

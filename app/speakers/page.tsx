@@ -1,26 +1,27 @@
 import Image from "next/image"
-import { prisma } from "@/lib/prisma"
 
 interface Speaker {
   id: string
   name: string
   title: string
+  company: string
   description: string
+  linkedin: string | null
   imageUrl: string | null
 }
 
 async function getSpeakers(): Promise<Speaker[]> {
   try {
-    const speakers = await prisma.speaker.findMany({
-      orderBy: {
-        name: 'asc'
-      }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/speakers`, {
+      next: { revalidate: 86400 } // Cache for 24 hours
     })
-
-    return speakers.map(speaker => ({
-      ...speaker,
-      imageUrl: speaker.imageUrl
-    }))
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch speakers')
+    }
+    
+    const data = await response.json()
+    return data.speakers || []
   } catch (error) {
     console.error("Error fetching speakers:", error)
     return []
@@ -68,6 +69,7 @@ export default async function SpeakersPage() {
                   <div className="w-full md:w-1/2">
                     <div className="text-gray-600 mb-1">{speaker.title}</div>
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">{speaker.name}</h2>
+                    <div className="text-gray-600 mb-2">{speaker.company}</div>
                     <p className="text-gray-700">{speaker.description}</p>
                   </div>
                 </div>

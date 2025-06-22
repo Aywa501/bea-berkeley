@@ -33,6 +33,7 @@ model ExecBoardMember {
   linkedin    String?
   coffeeChat  String?
   imageUrl    String?
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -45,6 +46,7 @@ model Speaker {
   description String
   linkedin    String?
   imageUrl    String?
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -55,6 +57,7 @@ model RecruitmentEvent {
   date        DateTime
   description String
   location    String?
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -65,6 +68,7 @@ model RecruitmentForm {
   description String
   deadline    DateTime
   link        String
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 } 
