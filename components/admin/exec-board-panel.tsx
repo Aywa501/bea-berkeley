@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { User } from "lucide-react"
+import { BulkUpload } from "./bulk-upload"
 
 interface ExecBoardMember {
   id: string
@@ -117,68 +118,97 @@ export function ExecBoardPanel() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="position">Position</Label>
-            <Input
-              id="position"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
+      <Card>
+        <CardHeader>
+          <CardTitle>Bulk Upload</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BulkUpload
+            endpoint="/api/admin/exec-board/bulk"
+            fields={["name", "position", "description", "linkedin", "coffeeChat", "imageUrl"]}
+            requiredFields={["name", "position", "description"]}
+            onSuccess={fetchMembers}
           />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="linkedin">LinkedIn URL</Label>
-            <Input
-              id="linkedin"
-              value={formData.linkedin}
-              onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-            />
+          <div className="mt-4 text-sm text-gray-600">
+            <p><strong>Required fields:</strong> name, position, description</p>
+            <p><strong>Optional fields:</strong> linkedin, coffeeChat, imageUrl</p>
+            <p><strong>Image URL:</strong> Provide a direct link to an image (e.g., https://example.com/image.jpg)</p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="coffeeChat">Coffee Chat URL</Label>
-            <Input
-              id="coffeeChat"
-              value={formData.coffeeChat}
-              onChange={(e) => setFormData({ ...formData, coffeeChat: e.target.value })}
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="image">Image</Label>
-          <Input
-            id="image"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            required
-          />
-        </div>
-        <Button type="submit">Add Member</Button>
-      </form>
+        </CardContent>
+      </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Add Single Member</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn URL</Label>
+                <Input
+                  id="linkedin"
+                  value={formData.linkedin}
+                  onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="coffeeChat">Coffee Chat URL</Label>
+                <Input
+                  id="coffeeChat"
+                  value={formData.coffeeChat}
+                  onChange={(e) => setFormData({ ...formData, coffeeChat: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image">Image</Label>
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                required
+              />
+            </div>
+            <Button type="submit">Add Member</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Members</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
