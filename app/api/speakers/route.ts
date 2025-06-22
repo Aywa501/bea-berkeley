@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const speakers = await prisma.speaker.findMany({
       orderBy: {
-        name: 'asc'
+        order: 'asc'
       }
     })
 

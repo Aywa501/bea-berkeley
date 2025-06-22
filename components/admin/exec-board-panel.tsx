@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { User, Edit, Save, X, Upload } from "lucide-react"
 import { BulkUpload } from "./bulk-upload"
+import { SortableTable } from "@/components/ui/sortable-table"
 
 interface ExecBoardMember {
   id: string
@@ -21,6 +22,7 @@ interface ExecBoardMember {
   linkedin?: string
   coffeeChat?: string
   imageUrl?: string
+  order?: number
 }
 
 interface EditableExecBoardMember extends ExecBoardMember {
@@ -228,6 +230,224 @@ export function ExecBoardPanel() {
     ))
   }
 
+  const handleReorder = async (newOrder: EditableExecBoardMember[]) => {
+    setMembers(newOrder)
+    
+    try {
+      const response = await fetch("/api/admin/exec-board/reorder", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ items: newOrder }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to reorder members")
+      }
+
+      toast.success("Order updated successfully")
+    } catch (error) {
+      console.error("Error reordering members:", error)
+      toast.error("Failed to update order")
+      // Revert to original order
+      fetchMembers()
+    }
+  }
+
+  const renderHeaders = () => (
+    <>
+      <TableHead className="min-w-[150px]">Name</TableHead>
+      <TableHead className="min-w-[150px]">Position</TableHead>
+      <TableHead className="min-w-[200px]">Description</TableHead>
+      <TableHead className="min-w-[150px]">LinkedIn</TableHead>
+      <TableHead className="min-w-[150px]">Coffee Chat</TableHead>
+      <TableHead className="min-w-[128px]">Image</TableHead>
+      <TableHead className="min-w-[120px]">Actions</TableHead>
+    </>
+  )
+
+  const renderRow = (member: EditableExecBoardMember) => (
+    <>
+      <TableCell className="min-w-[150px]">
+        {member.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={member.name}
+              onChange={(e) => updateMemberField(member.id, "name", e.target.value)}
+              className="w-full"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span>{member.name}</span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {member.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={member.position}
+              onChange={(e) => updateMemberField(member.id, "position", e.target.value)}
+              className="w-full"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span>{member.position}</span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[200px]">
+        {member.isEditing ? (
+          <div className="relative group">
+            <Textarea
+              value={member.description}
+              onChange={(e) => updateMemberField(member.id, "description", e.target.value)}
+              className="w-full min-h-[60px]"
+            />
+            <Edit className="absolute right-2 top-2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span className="text-sm max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap">
+              {member.description}
+            </span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {member.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={member.linkedin || ""}
+              onChange={(e) => updateMemberField(member.id, "linkedin", e.target.value)}
+              className="w-full"
+              placeholder="LinkedIn URL"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span className="text-sm text-blue-600 truncate max-w-[150px] block">
+              {member.linkedin || "—"}
+            </span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {member.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={member.coffeeChat || ""}
+              onChange={(e) => updateMemberField(member.id, "coffeeChat", e.target.value)}
+              className="w-full"
+              placeholder="Coffee Chat URL"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span className="text-sm text-blue-600 truncate max-w-[150px] block">
+              {member.coffeeChat || "—"}
+            </span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[128px]">
+        <div className="relative w-32 h-32 group">
+          {member.imageUrl ? (
+            <Image
+              src={member.imageUrl}
+              alt={member.name}
+              fill
+              className="object-cover rounded-full"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+              <User className="w-16 h-16 text-gray-400" />
+            </div>
+          )}
+          {isEditMode && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <label className="cursor-pointer">
+                <Upload className="w-6 h-6 text-white" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageUpload(member.id, e.target.files[0])
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="min-w-[120px]">
+        <div className="flex gap-2">
+          {member.isEditing ? (
+            <>
+              <Button
+                size="sm"
+                onClick={() => saveEditing(member.id)}
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => cancelEditing(member.id)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => startEditing(member.id)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(member.id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
+      </TableCell>
+    </>
+  )
+
   return (
     <div className="space-y-6">
       <Card>
@@ -330,201 +550,13 @@ export function ExecBoardPanel() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[150px]">Name</TableHead>
-                  <TableHead className="min-w-[150px]">Position</TableHead>
-                  <TableHead className="min-w-[200px]">Description</TableHead>
-                  <TableHead className="min-w-[150px]">LinkedIn</TableHead>
-                  <TableHead className="min-w-[150px]">Coffee Chat</TableHead>
-                  <TableHead className="min-w-[128px]">Image</TableHead>
-                  <TableHead className="min-w-[120px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id} className={member.isEditing ? "bg-blue-50" : ""}>
-                    <TableCell className="min-w-[150px]">
-                      {member.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={member.name}
-                            onChange={(e) => updateMemberField(member.id, "name", e.target.value)}
-                            className="w-full"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span>{member.name}</span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {member.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={member.position}
-                            onChange={(e) => updateMemberField(member.id, "position", e.target.value)}
-                            className="w-full"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span>{member.position}</span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[200px]">
-                      {member.isEditing ? (
-                        <div className="relative group">
-                          <Textarea
-                            value={member.description}
-                            onChange={(e) => updateMemberField(member.id, "description", e.target.value)}
-                            className="w-full min-h-[60px]"
-                          />
-                          <Edit className="absolute right-2 top-2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span className="text-sm max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap">
-                            {member.description}
-                          </span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {member.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={member.linkedin || ""}
-                            onChange={(e) => updateMemberField(member.id, "linkedin", e.target.value)}
-                            className="w-full"
-                            placeholder="LinkedIn URL"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span className="text-sm text-blue-600 truncate max-w-[150px] block">
-                            {member.linkedin || "—"}
-                          </span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {member.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={member.coffeeChat || ""}
-                            onChange={(e) => updateMemberField(member.id, "coffeeChat", e.target.value)}
-                            className="w-full"
-                            placeholder="Coffee Chat URL"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span className="text-sm text-blue-600 truncate max-w-[150px] block">
-                            {member.coffeeChat || "—"}
-                          </span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[128px]">
-                      <div className="relative w-32 h-32 group">
-                        {member.imageUrl ? (
-                          <Image
-                            src={member.imageUrl}
-                            alt={member.name}
-                            fill
-                            className="object-cover rounded-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                            <User className="w-16 h-16 text-gray-400" />
-                          </div>
-                        )}
-                        {isEditMode && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <label className="cursor-pointer">
-                              <Upload className="w-6 h-6 text-white" />
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  if (e.target.files && e.target.files[0]) {
-                                    handleImageUpload(member.id, e.target.files[0])
-                                  }
-                                }}
-                              />
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="min-w-[120px]">
-                      <div className="flex gap-2">
-                        {member.isEditing ? (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => saveEditing(member.id)}
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => cancelEditing(member.id)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            {isEditMode && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditing(member.id)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(member.id)}
-                            >
-                              Delete
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <SortableTable
+              items={members}
+              onReorder={handleReorder}
+              renderHeaders={renderHeaders}
+              renderRow={renderRow}
+              disabled={!isEditMode}
+            />
           </div>
         </CardContent>
       </Card>

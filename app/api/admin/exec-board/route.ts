@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const execMembers = await prisma.execBoardMember.findMany({
       orderBy: {
-        createdAt: "desc",
+        order: "asc",
       },
     })
     
@@ -62,6 +62,12 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get the highest order value and add 1
+    const lastMember = await prisma.execBoardMember.findFirst({
+      orderBy: { order: 'desc' }
+    })
+    const newOrder = (lastMember?.order ?? -1) + 1
+
     // Upload image to Vercel Blob
     const blob = await put(`exec-board/${Date.now()}-${imageFile.name}`, imageFile, {
       access: 'public',
@@ -75,6 +81,7 @@ export async function POST(request: Request) {
         linkedin,
         coffeeChat,
         imageUrl: blob.url,
+        order: newOrder,
       },
     })
 
