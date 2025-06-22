@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 interface Form {
@@ -105,37 +108,73 @@ export function FormsPanel() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="interestFormUrl" className="text-sm font-medium">
-            Interest Form URL
-          </label>
-          <Input
-            id="interestFormUrl"
-            type="url"
-            value={formData.interestFormUrl}
-            onChange={(e) =>
-              setFormData({ ...formData, interestFormUrl: e.target.value })
-            }
-            placeholder="https://forms.google.com/..."
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="applicationFormUrl" className="text-sm font-medium">
-            Application Form URL
-          </label>
-          <Input
-            id="applicationFormUrl"
-            type="url"
-            value={formData.applicationFormUrl}
-            onChange={(e) =>
-              setFormData({ ...formData, applicationFormUrl: e.target.value })
-            }
-            placeholder="https://forms.google.com/..."
-          />
-        </div>
-        <Button type="submit">Update Forms</Button>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Update Forms</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="interestFormUrl">Interest Form URL</Label>
+              <Input
+                id="interestFormUrl"
+                type="url"
+                value={formData.interestFormUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, interestFormUrl: e.target.value })
+                }
+                placeholder="https://forms.google.com/..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="applicationFormUrl">Application Form URL</Label>
+              <Input
+                id="applicationFormUrl"
+                type="url"
+                value={formData.applicationFormUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, applicationFormUrl: e.target.value })
+                }
+                placeholder="https://forms.google.com/..."
+              />
+            </div>
+            <Button type="submit">Update Forms</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Forms</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>URL</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {forms.map((form) => (
+                <TableRow key={form.id}>
+                  <TableCell className="capitalize">{form.type}</TableCell>
+                  <TableCell>
+                    <a 
+                      href={form.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline truncate block max-w-md"
+                    >
+                      {form.url}
+                    </a>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

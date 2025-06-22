@@ -41,7 +41,9 @@ model Speaker {
   id          String   @id @default(cuid())
   name        String
   title       String
+  company     String
   description String
+  linkedin    String?
   imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
