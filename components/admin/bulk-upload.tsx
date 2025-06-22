@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import * as XLSX from 'xlsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle, XCircle } from "lucide-react"
 
 interface BulkUploadProps {
   endpoint: string
@@ -14,9 +16,16 @@ interface BulkUploadProps {
   onSuccess?: () => void
 }
 
+interface ValidationError {
+  type: 'missing_fields' | 'empty_file' | 'invalid_format' | 'no_data'
+  message: string
+  details?: string[]
+}
+
 export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }: BulkUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [previewData, setPreviewData] = useState<any[] | null>(null)
+  const [validationError, setValidationError] = useState<ValidationError | null>(null)
   
   // Generate unique ID based on endpoint
   const uniqueId = `bulk-upload-${endpoint.replace(/[^a-zA-Z0-9]/g, '-')}`
@@ -26,11 +35,16 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
     console.log('previewData state changed:', previewData)
   }, [previewData])
 
+  const clearValidationError = () => {
+    setValidationError(null)
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     console.log('File selected:', file.name)
+    clearValidationError()
 
     try {
       const reader = new FileReader()
@@ -42,6 +56,16 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
         const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
         console.log('Parsed data:', jsonData)
+
+        // Check if file is empty
+        if (!jsonData || jsonData.length === 0) {
+          setValidationError({
+            type: 'empty_file',
+            message: 'The uploaded file contains no data.',
+            details: ['Please make sure your Excel/CSV file has at least one row of data (excluding headers).']
+          })
+          return
+        }
 
         // Normalize the data by mapping column names to expected field names
         const normalizedData = jsonData.map((item: any) => {
@@ -68,6 +92,11 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
             'title': 'title',
             'Title': 'title',
             'TITLE': 'title',
+            
+            // Company variations
+            'company': 'company',
+            'Company': 'company',
+            'COMPANY': 'company',
             
             // LinkedIn variations
             'linkedin': 'linkedin',
@@ -132,8 +161,17 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
         console.log('Missing fields:', missingFields)
 
         if (missingFields.length > 0) {
-          console.log('Validation failed, showing error toast')
-          toast.error(`Missing required fields: ${missingFields.join(', ')}`)
+          console.log('Validation failed, showing error')
+          setValidationError({
+            type: 'missing_fields',
+            message: `Your table is missing ${missingFields.length} required field${missingFields.length > 1 ? 's' : ''}.`,
+            details: [
+              `Missing: ${missingFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')}`,
+              `Available columns: ${availableFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')}`,
+              'Make sure your Excel/CSV file has the correct column headers.',
+              'Column names are case-insensitive and can include spaces or underscores.'
+            ]
+          })
           return
         }
 
@@ -146,7 +184,15 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
       reader.readAsBinaryString(file)
     } catch (error) {
       console.error('Error reading file:', error)
-      toast.error('Error reading file. Please make sure it\'s a valid Excel or CSV file.')
+      setValidationError({
+        type: 'invalid_format',
+        message: 'Unable to read the uploaded file.',
+        details: [
+          'Please make sure you\'re uploading a valid Excel (.xlsx, .xls) or CSV file.',
+          'Check that the file is not corrupted or password-protected.',
+          'Ensure the file contains data in the first sheet.'
+        ]
+      })
     }
   }
 
@@ -178,6 +224,7 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
       }
       
       setPreviewData(null)
+      clearValidationError()
       onSuccess?.()
     } catch (error) {
       console.error('Error uploading data:', error)
@@ -191,6 +238,11 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
     if (endpoint.includes("exec-board")) return "Add Member(s)"
     if (endpoint.includes("speakers")) return "Add Speaker(s)"
     return "Confirm Upload"
+  }
+
+  const getRequiredFieldsText = () => {
+    if (requiredFields.length === 0) return "No required fields"
+    return `Required: ${requiredFields.join(', ')}`
   }
 
   // Debug log
@@ -229,7 +281,10 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
             </Button>
             <Button
               variant="ghost"
-              onClick={() => setPreviewData(null)}
+              onClick={() => {
+                setPreviewData(null)
+                clearValidationError()
+              }}
               disabled={isUploading}
             >
               Cancel
@@ -237,6 +292,37 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
           </div>
         )}
       </div>
+
+      {/* Validation Error Display */}
+      {validationError && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-medium">{validationError.message}</p>
+              {validationError.details && (
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {validationError.details.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Field Requirements Info */}
+      <Alert>
+        <CheckCircle className="h-4 w-4" />
+        <AlertDescription>
+          <div className="space-y-1">
+            <p className="font-medium">Table Requirements</p>
+            <p className="text-sm">{getRequiredFieldsText()}</p>
+            <p className="text-sm">Optional: {fields.filter(f => !requiredFields.includes(f)).join(', ')}</p>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       {previewData && previewData.length > 0 && (
         <Card>
@@ -249,7 +335,12 @@ export function BulkUpload({ endpoint, fields, requiredFields = [], onSuccess }:
                 <TableHeader>
                   <TableRow>
                     {fields.map((field) => (
-                      <TableHead key={field}>{field}</TableHead>
+                      <TableHead key={field}>
+                        {field}
+                        {requiredFields.includes(field) && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
