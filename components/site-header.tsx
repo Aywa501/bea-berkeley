@@ -12,6 +12,7 @@ export function SiteHeader() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
   const moreMenuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const showWipPages = false // Flag to hide WIP pages
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,22 +67,6 @@ export function SiteHeader() {
             >
               <span>Home</span>
               {isActive("/") && (
-                <motion.span
-                  layoutId="underline"
-                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
-                />
-              )}
-            </Link>
-            <Link
-              href="/about"
-              className={`text-sm font-medium transition-colors relative ${
-                isActive("/about")
-                  ? "text-blue-600"
-                  : "text-gray-800 hover:text-blue-600"
-              }`}
-            >
-              <span>About</span>
-              {isActive("/about") && (
                 <motion.span
                   layoutId="underline"
                   className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
@@ -148,22 +133,26 @@ export function SiteHeader() {
               {isMoreMenuOpen && (
                 <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                   <div className="py-1" role="menu" aria-orientation="vertical">
-                    <Link
-                      href="/past-clients"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      role="menuitem"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                    >
-                      Past Clients
-                    </Link>
-                    <Link
-                      href="/ongoing-research"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      role="menuitem"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                    >
-                      Ongoing Research
-                    </Link>
+                    {showWipPages && (
+                      <>
+                        <Link
+                          href="/past-clients"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                        >
+                          Past Clients
+                        </Link>
+                        <Link
+                          href="/ongoing-research"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                        >
+                          Ongoing Research
+                        </Link>
+                      </>
+                    )}
                     <Link
                       href="/bwim"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -264,25 +253,29 @@ export function SiteHeader() {
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="mt-2 space-y-2 pl-4 overflow-hidden"
+                        className="pl-4 mt-2 space-y-2"
                       >
-                        <Link
-                          href="/past-clients"
-                          className="block text-sm text-gray-700 hover:text-blue-600"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Past Clients
-                        </Link>
-                        <Link
-                          href="/ongoing-research"
-                          className="block text-sm text-gray-700 hover:text-blue-600"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Ongoing Research
-                        </Link>
+                        {showWipPages && (
+                          <>
+                            <Link
+                              href="/past-clients"
+                              className="block text-sm text-gray-700"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              Past Clients
+                            </Link>
+                            <Link
+                              href="/ongoing-research"
+                              className="block text-sm text-gray-700"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              Ongoing Research
+                            </Link>
+                          </>
+                        )}
                         <Link
                           href="/bwim"
-                          className="block text-sm text-gray-700 hover:text-blue-600"
+                          className="block text-sm text-gray-700"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           BWIM

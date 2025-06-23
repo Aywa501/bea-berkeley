@@ -26,14 +26,14 @@ export default function Home() {
       <section ref={heroRef} className="relative h-screen w-full overflow-hidden">
         <motion.div style={{ y: heroY }} className="absolute inset-0 z-0">
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/DSCF8164%20%281%29_edited_edited.jpg-w0LoyeXrl87DH0KWI1iXlXdo04kna8.jpeg"
+            src="https://glrzi8puspeey1rz.public.blob.vercel-storage.com/0-1-LpxWqq0WUhxiUiu1aZ8Cs6ns8r1uk4.jpg"
             alt="BEA Berkeley members"
             fill
             priority
             className="object-cover brightness-[0.6]"
           />
         </motion.div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 z-10 pb-32">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,12 +109,6 @@ export default function Home() {
                 Through workshops, speaker events, and research opportunities, we provide students with practical
                 insights into behavioral economics and its applications in the real world.
               </p>
-              <Link
-                href="/about"
-                className="inline-block bg-white text-blue-800 hover:bg-blue-50 font-medium py-3 px-8 transition-colors text-lg"
-              >
-                About Us
-              </Link>
             </div>
             <div className="order-1 md:order-2 relative">
               <div className="relative h-[400px] md:h-[500px] overflow-hidden shadow-2xl">
@@ -156,7 +150,7 @@ export default function Home() {
           >
             <div className="relative w-full max-w-5xl h-[300px] md:h-[400px] bg-white shadow-lg p-8 overflow-hidden">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo_splash-9nVA5fMLzi0MtkfOglTqmK06mY0fgC.png"
+                src="https://glrzi8puspeey1rz.public.blob.vercel-storage.com/logo_new-CpjAXBYz72gFACSqEgOituC14czAOY.png"
                 alt="Partner Companies"
                 fill
                 className="object-contain p-8"
@@ -196,7 +190,7 @@ export default function Home() {
           >
             <div className="relative h-[400px] md:h-[500px] overflow-hidden shadow-xl">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/DSCF8223_edited.jpg-qLn4b80lcQdfYbIcvghavYl1VrbsEZ.jpeg"
+                src="https://glrzi8puspeey1rz.public.blob.vercel-storage.com/0-GoJsLKjJurQuj34rjaI9A5PTdq02GG.jpg"
                 alt="BEA Team"
                 fill
                 className="object-cover"
