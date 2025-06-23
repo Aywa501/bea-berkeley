@@ -73,22 +73,6 @@ export function SiteHeader() {
               )}
             </Link>
             <Link
-              href="/about"
-              className={`text-sm font-medium transition-colors relative ${
-                isActive("/about")
-                  ? "text-blue-600"
-                  : "text-gray-800 hover:text-blue-600"
-              }`}
-            >
-              <span>About</span>
-              {isActive("/about") && (
-                <motion.span
-                  layoutId="underline"
-                  className="absolute left-0 top-full h-0.5 w-full bg-blue-600"
-                />
-              )}
-            </Link>
-            <Link
               href="/speakers"
               className={`text-sm font-medium transition-colors relative ${
                 isActive("/speakers")

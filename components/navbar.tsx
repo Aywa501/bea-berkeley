@@ -39,14 +39,6 @@ export function Navbar() {
               Home
             </Link>
             <Link
-              href="/about"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/about") ? "text-primary" : "text-foreground"
-              }`}
-            >
-              About
-            </Link>
-            <Link
               href="/join-us"
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive("/join-us") ? "text-primary" : "text-foreground"

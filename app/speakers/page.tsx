@@ -41,7 +41,7 @@ export default async function SpeakersPage() {
   return (
     <main className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <section className="py-20 bg-gray-100 flex items-center justify-center">
+      <section className="pt-32 pb-20 bg-gray-100 flex items-end justify-center">
         <div className="text-center z-10 px-4">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">Past Speakers</h1>
         </div>

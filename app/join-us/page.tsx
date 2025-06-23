@@ -51,7 +51,7 @@ export default async function JoinUsPage() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <section className="py-20 bg-gray-100 flex items-center justify-center">
+      <section className="pt-32 pb-20 bg-gray-100 flex items-end justify-center">
         <div className="text-center z-10 px-4 max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">Join the BEA Family!</h1>
           <p className="text-xl text-gray-600 mb-8">
