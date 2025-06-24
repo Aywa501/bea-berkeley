@@ -3,10 +3,10 @@
 import type React from "react"
 
 import { useState } from "react"
-import Image from "next/image"
 import { motion } from "framer-motion"
 
 export default function BWIMPage() {
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -15,7 +15,12 @@ export default function BWIMPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!email) {
+    if (!name.trim()) {
+      setError("Please enter your name")
+      return
+    }
+
+    if (!email.trim()) {
       setError("Please enter your email address")
       return
     }
@@ -23,14 +28,29 @@ export default function BWIMPage() {
     setIsSubmitting(true)
     setError(null)
 
-    // Simulate form submission
     try {
-      // In a real implementation, you would send this to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await fetch("/api/bwim", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit form")
+      }
+
       setIsSubmitted(true)
+      setName("")
       setEmail("")
     } catch (err) {
-      setError("Something went wrong. Please try again.")
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -39,31 +59,16 @@ export default function BWIMPage() {
   return (
     <main className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <section className="relative h-[50vh] w-full overflow-hidden">
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6106-Mpsc8UkAbqrasnTN5wlBgP6ysRgvmZ.jpeg"
-          alt="BWIM Team"
-          fill
-          priority
-          className="object-cover brightness-[0.6]"
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+      <section className="pt-40 pb-20 bg-gray-100 flex items-center justify-center">
+        <div className="text-center z-10 px-4">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight"
+            className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight"
           >
-            Berkeley Women in Markets
+            Berkeley Women in Marketing
           </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl text-white mb-10 max-w-3xl font-light"
-          >
-            Promoting gender diversity in economic markets
-          </motion.p>
         </div>
       </section>
 
@@ -73,15 +78,28 @@ export default function BWIMPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight">Join Our Community</h2>
             <p className="text-lg text-gray-700 mb-8">
-              Berkeley Women in Markets (BWIM) is an initiative by the Behavioral Economics Association at
-              Berkeley focused on promoting gender diversity in economic markets and the field of behavioral economics.
-              Sign up to receive updates about our events and opportunities.
+              Sign up to receive updates
             </p>
           </div>
 
           <div className="bg-gray-50 p-8 border border-gray-200 shadow-sm">
             {!isSubmitted ? (
               <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email Address
@@ -95,8 +113,9 @@ export default function BWIMPage() {
                     placeholder="Enter your email address"
                     disabled={isSubmitting}
                   />
-                  {error && <p className="text-red-600 text-sm">{error}</p>}
                 </div>
+
+                {error && <p className="text-red-600 text-sm">{error}</p>}
 
                 <button
                   type="submit"
@@ -123,7 +142,7 @@ export default function BWIMPage() {
                   />
                 </svg>
                 <h3 className="text-2xl font-bold mb-2">Thank You!</h3>
-                <p className="text-gray-600">You've successfully subscribed to Berkeley Women in Markets updates.</p>
+                <p className="text-gray-600">You've successfully subscribed to Berkeley Women in Marketing updates.</p>
                 <button
                   onClick={() => setIsSubmitted(false)}
                   className="mt-6 text-blue-600 hover:text-blue-800 font-medium"
