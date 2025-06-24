@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { User, Edit, Save, X, Upload } from "lucide-react"
 import { BulkUpload } from "./bulk-upload"
+import { SortableTable } from "@/components/ui/sortable-table"
 
 interface Speaker {
   id: string
@@ -21,6 +22,7 @@ interface Speaker {
   description: string
   linkedin?: string
   imageUrl?: string
+  order?: number
 }
 
 interface EditableSpeaker extends Speaker {
@@ -33,6 +35,8 @@ export function SpeakersPanel() {
   const [speakers, setSpeakers] = useState<EditableSpeaker[]>([])
   const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     title: "",
@@ -48,6 +52,7 @@ export function SpeakersPanel() {
   }, [session])
 
   const fetchSpeakers = async () => {
+    setIsLoading(true)
     try {
       const response = await fetch("/api/admin/speakers", {
         credentials: "include"
@@ -61,16 +66,35 @@ export function SpeakersPanel() {
     } catch (error) {
       console.error("Error fetching speakers:", error)
       toast.error("Failed to fetch speakers")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.name?.trim() || !formData.title?.trim() || !formData.company?.trim() || !formData.description?.trim()) {
+      toast.error("Name, title, company, and description are required")
+      return
+    }
+
+    if (!formData.image) {
+      toast.error("Image is required")
+      return
+    }
+
+    setIsSubmitting(true)
     console.log("Submitting form with session:", session)
     const formDataToSend = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null) {
-        formDataToSend.append(key, value)
+        if (typeof value === 'string') {
+          formDataToSend.append(key, value.trim())
+        } else {
+          formDataToSend.append(key, value)
+        }
       }
     })
 
@@ -99,6 +123,8 @@ export function SpeakersPanel() {
     } catch (error) {
       console.error("Error creating speaker:", error)
       toast.error(error instanceof Error ? error.message : "Failed to create speaker")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -106,17 +132,19 @@ export function SpeakersPanel() {
     try {
       const response = await fetch(`/api/admin/speakers?id=${id}`, {
         method: "DELETE",
+        credentials: "include"
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete speaker")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete speaker")
       }
 
       toast.success("Speaker deleted successfully")
       fetchSpeakers()
     } catch (error) {
       console.error("Error deleting speaker:", error)
-      toast.error("Failed to delete speaker")
+      toast.error(error instanceof Error ? error.message : "Failed to delete speaker")
     }
   }
 
@@ -129,9 +157,9 @@ export function SpeakersPanel() {
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode)
     if (isEditMode) {
-      // Exit edit mode - reset all editing states
+      // Exit edit mode - reset all editing states and restore original data
       setSpeakers(speakers.map(speaker => ({
-        ...speaker,
+        ...(speaker.originalData || speaker),
         isEditing: false,
         originalData: speaker.originalData || speaker
       })))
@@ -142,7 +170,7 @@ export function SpeakersPanel() {
     setSpeakers(speakers.map(speaker => ({
       ...speaker,
       isEditing: speaker.id === id,
-      originalData: speaker.originalData || speaker
+      originalData: speaker.originalData || { ...speaker, isEditing: false, originalData: undefined }
     })))
   }
 
@@ -163,13 +191,19 @@ export function SpeakersPanel() {
     const speaker = speakers.find(s => s.id === id)
     if (!speaker) return
 
+    // Validate required fields
+    if (!speaker.name?.trim() || !speaker.title?.trim() || !speaker.company?.trim() || !speaker.description?.trim()) {
+      toast.error("Name, title, company, and description are required")
+      return
+    }
+
     try {
       const formDataToSend = new FormData()
-      formDataToSend.append("name", speaker.name)
-      formDataToSend.append("title", speaker.title)
-      formDataToSend.append("company", speaker.company)
-      formDataToSend.append("description", speaker.description)
-      if (speaker.linkedin) formDataToSend.append("linkedin", speaker.linkedin)
+      formDataToSend.append("name", speaker.name.trim())
+      formDataToSend.append("title", speaker.title.trim())
+      formDataToSend.append("company", speaker.company.trim())
+      formDataToSend.append("description", speaker.description.trim())
+      if (speaker.linkedin?.trim()) formDataToSend.append("linkedin", speaker.linkedin.trim())
 
       const response = await fetch(`/api/admin/speakers/${id}`, {
         method: "PUT",
@@ -178,14 +212,15 @@ export function SpeakersPanel() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update speaker")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to update speaker")
       }
 
       toast.success("Speaker updated successfully")
       fetchSpeakers()
     } catch (error) {
       console.error("Error updating speaker:", error)
-      toast.error("Failed to update speaker")
+      toast.error(error instanceof Error ? error.message : "Failed to update speaker")
     }
   }
 
@@ -227,6 +262,221 @@ export function SpeakersPanel() {
         : speaker
     ))
   }
+
+  const handleReorder = async (newOrder: EditableSpeaker[]) => {
+    setSpeakers(newOrder)
+    
+    try {
+      const response = await fetch("/api/admin/speakers/reorder", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ items: newOrder }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to reorder speakers")
+      }
+
+      toast.success("Order updated successfully")
+    } catch (error) {
+      console.error("Error reordering speakers:", error)
+      toast.error("Failed to update order")
+      // Revert to original order
+      fetchSpeakers()
+    }
+  }
+
+  const renderHeaders = () => (
+    <>
+      <TableHead className="min-w-[150px]">Name</TableHead>
+      <TableHead className="min-w-[150px]">Title</TableHead>
+      <TableHead className="min-w-[150px]">Company</TableHead>
+      <TableHead className="min-w-[200px]">Description</TableHead>
+      <TableHead className="min-w-[150px]">LinkedIn</TableHead>
+      <TableHead className="min-w-[128px]">Image</TableHead>
+      <TableHead className="min-w-[120px]">Actions</TableHead>
+    </>
+  )
+
+  const renderRow = (speaker: EditableSpeaker) => (
+    <>
+      <TableCell className="min-w-[150px]">
+        {speaker.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={speaker.name}
+              onChange={(e) => updateSpeakerField(speaker.id, "name", e.target.value)}
+              className="w-full"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span>{speaker.name}</span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {speaker.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={speaker.title}
+              onChange={(e) => updateSpeakerField(speaker.id, "title", e.target.value)}
+              className="w-full"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span>{speaker.title}</span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {speaker.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={speaker.company}
+              onChange={(e) => updateSpeakerField(speaker.id, "company", e.target.value)}
+              className="w-full"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span>{speaker.company}</span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[200px]">
+        {speaker.isEditing ? (
+          <div className="relative group">
+            <Textarea
+              value={speaker.description}
+              onChange={(e) => updateSpeakerField(speaker.id, "description", e.target.value)}
+              className="w-full min-h-[60px]"
+            />
+            <Edit className="absolute right-2 top-2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span className="text-sm max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap">
+              {speaker.description}
+            </span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[150px]">
+        {speaker.isEditing ? (
+          <div className="relative group">
+            <Input
+              value={speaker.linkedin || ""}
+              onChange={(e) => updateSpeakerField(speaker.id, "linkedin", e.target.value)}
+              className="w-full"
+              placeholder="LinkedIn URL"
+            />
+            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className="relative group">
+            <span className="text-sm text-blue-600 truncate max-w-[150px] block">
+              {speaker.linkedin || "—"}
+            </span>
+            {isEditMode && (
+              <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="min-w-[128px]">
+        <div className="relative w-32 h-32 group">
+          {speaker.imageUrl ? (
+            <Image
+              src={speaker.imageUrl}
+              alt={speaker.name}
+              fill
+              className="object-cover rounded-full"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+              <User className="w-16 h-16 text-gray-400" />
+            </div>
+          )}
+          {isEditMode && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <label className="cursor-pointer">
+                <Upload className="w-6 h-6 text-white" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageUpload(speaker.id, e.target.files[0])
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="min-w-[120px]">
+        <div className="flex gap-2">
+          {speaker.isEditing ? (
+            <>
+              <Button
+                size="sm"
+                onClick={() => saveEditing(speaker.id)}
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => cancelEditing(speaker.id)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => startEditing(speaker.id)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(speaker.id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
+      </TableCell>
+    </>
+  )
 
   return (
     <div className="space-y-6">
@@ -311,7 +561,9 @@ export function SpeakersPanel() {
                 required
               />
             </div>
-            <Button type="submit">Add Speaker</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Adding Speaker..." : "Add Speaker"}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -329,198 +581,19 @@ export function SpeakersPanel() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[150px]">Name</TableHead>
-                  <TableHead className="min-w-[150px]">Title</TableHead>
-                  <TableHead className="min-w-[150px]">Company</TableHead>
-                  <TableHead className="min-w-[200px]">Description</TableHead>
-                  <TableHead className="min-w-[150px]">LinkedIn</TableHead>
-                  <TableHead className="min-w-[128px]">Image</TableHead>
-                  <TableHead className="min-w-[120px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {speakers.map((speaker) => (
-                  <TableRow key={speaker.id} className={speaker.isEditing ? "bg-blue-50" : ""}>
-                    <TableCell className="min-w-[150px]">
-                      {speaker.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={speaker.name}
-                            onChange={(e) => updateSpeakerField(speaker.id, "name", e.target.value)}
-                            className="w-full"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span>{speaker.name}</span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {speaker.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={speaker.title}
-                            onChange={(e) => updateSpeakerField(speaker.id, "title", e.target.value)}
-                            className="w-full"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span>{speaker.title}</span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {speaker.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={speaker.company}
-                            onChange={(e) => updateSpeakerField(speaker.id, "company", e.target.value)}
-                            className="w-full"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span>{speaker.company}</span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[200px]">
-                      {speaker.isEditing ? (
-                        <div className="relative group">
-                          <Textarea
-                            value={speaker.description}
-                            onChange={(e) => updateSpeakerField(speaker.id, "description", e.target.value)}
-                            className="w-full min-h-[60px]"
-                          />
-                          <Edit className="absolute right-2 top-2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span className="text-sm max-w-[200px] block overflow-hidden text-ellipsis whitespace-nowrap">
-                            {speaker.description}
-                          </span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      {speaker.isEditing ? (
-                        <div className="relative group">
-                          <Input
-                            value={speaker.linkedin || ""}
-                            onChange={(e) => updateSpeakerField(speaker.id, "linkedin", e.target.value)}
-                            className="w-full"
-                            placeholder="LinkedIn URL"
-                          />
-                          <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative group">
-                          <span className="text-sm text-blue-600 truncate max-w-[150px] block">
-                            {speaker.linkedin || "—"}
-                          </span>
-                          {isEditMode && (
-                            <Edit className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[128px]">
-                      <div className="relative w-32 h-32 group">
-                        {speaker.imageUrl ? (
-                          <Image
-                            src={speaker.imageUrl}
-                            alt={speaker.name}
-                            fill
-                            className="object-cover rounded-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                            <User className="w-16 h-16 text-gray-400" />
-                          </div>
-                        )}
-                        {isEditMode && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <label className="cursor-pointer">
-                              <Upload className="w-6 h-6 text-white" />
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  if (e.target.files && e.target.files[0]) {
-                                    handleImageUpload(speaker.id, e.target.files[0])
-                                  }
-                                }}
-                              />
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="min-w-[120px]">
-                      <div className="flex gap-2">
-                        {speaker.isEditing ? (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => saveEditing(speaker.id)}
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => cancelEditing(speaker.id)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            {isEditMode && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditing(speaker.id)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(speaker.id)}
-                            >
-                              Delete
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-600">Loading speakers...</div>
+              </div>
+            ) : (
+              <SortableTable
+                items={speakers}
+                onReorder={handleReorder}
+                renderHeaders={renderHeaders}
+                renderRow={renderRow}
+                disabled={!isEditMode || isLoading}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

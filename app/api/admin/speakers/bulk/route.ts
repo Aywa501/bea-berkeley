@@ -51,6 +51,12 @@ export async function POST(request: Request) {
           }
         }
 
+        // Get the highest order value and add 1
+        const lastSpeaker = await prisma.speaker.findFirst({
+          orderBy: { order: 'desc' }
+        })
+        const newOrder = (lastSpeaker?.order ?? -1) + 1
+
         // Create the speaker
         const speaker = await prisma.speaker.create({
           data: {
@@ -59,6 +65,7 @@ export async function POST(request: Request) {
             company: item.company,
             description: item.description,
             imageUrl: imageUrl,
+            order: newOrder,
           },
         })
 

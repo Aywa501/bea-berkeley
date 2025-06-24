@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const speakers = await prisma.speaker.findMany({
       orderBy: {
-        createdAt: "desc",
+        order: "asc",
       },
     })
     
@@ -58,6 +58,12 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get the highest order value and add 1
+    const lastSpeaker = await prisma.speaker.findFirst({
+      orderBy: { order: 'desc' }
+    })
+    const newOrder = (lastSpeaker?.order ?? -1) + 1
+
     // Upload image to Vercel Blob
     const blob = await put(`speakers/${Date.now()}-${imageFile.name}`, imageFile, {
       access: 'public',
@@ -70,6 +76,7 @@ export async function POST(request: Request) {
         company,
         description,
         imageUrl: blob.url,
+        order: newOrder,
       },
     })
 

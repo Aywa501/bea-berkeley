@@ -24,49 +24,51 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-      </div>
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+        </div>
 
-      <MembersNavbar />
+        <MembersNavbar />
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Executive Board</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExecBoardPanel />
-          </CardContent>
-        </Card>
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Executive Board</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExecBoardPanel />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Speakers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SpeakersPanel />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Speakers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SpeakersPanel />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recruitment Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecruitmentPanel />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recruitment Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecruitmentPanel />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recruitment Forms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormsPanel />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recruitment Forms</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FormsPanel />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
