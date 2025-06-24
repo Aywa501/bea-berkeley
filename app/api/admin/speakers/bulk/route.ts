@@ -34,8 +34,8 @@ export async function POST(request: Request) {
       const item = items[i]
       try {
         // Validate required fields
-        if (!item.name || !item.title || !item.description) {
-          errors.push(`Row ${i + 1}: Missing required fields (name, title, description)`)
+        if (!item.name || !item.title || !item.company || !item.description) {
+          errors.push(`Row ${i + 1}: Missing required fields (name, title, company, description)`)
           continue
         }
 
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
           data: {
             name: item.name,
             title: item.title,
+            company: item.company,
             description: item.description,
             imageUrl: imageUrl,
           },
