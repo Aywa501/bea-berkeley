@@ -34,8 +34,8 @@ export async function POST(request: Request) {
       const item = items[i]
       try {
         // Validate required fields
-        if (!item.name || !item.title || !item.description) {
-          errors.push(`Row ${i + 1}: Missing required fields (name, title, description)`)
+        if (!item.name || !item.title || !item.company || !item.description) {
+          errors.push(`Row ${i + 1}: Missing required fields (name, title, company, description)`)
           continue
         }
 
@@ -51,13 +51,21 @@ export async function POST(request: Request) {
           }
         }
 
+        // Get the highest order value and add 1
+        const lastSpeaker = await prisma.speaker.findFirst({
+          orderBy: { order: 'desc' }
+        })
+        const newOrder = (lastSpeaker?.order ?? -1) + 1
+
         // Create the speaker
         const speaker = await prisma.speaker.create({
           data: {
             name: item.name,
             title: item.title,
+            company: item.company,
             description: item.description,
             imageUrl: imageUrl,
+            order: newOrder,
           },
         })
 

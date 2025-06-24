@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const speakers = await prisma.speaker.findMany({
       orderBy: {
-        createdAt: "desc",
+        order: "asc",
       },
     })
     
@@ -40,8 +40,16 @@ export async function POST(request: Request) {
     const formData = await request.formData()
     const name = formData.get("name") as string
     const title = formData.get("title") as string
+    const company = formData.get("company") as string
     const description = formData.get("description") as string
     const imageFile = formData.get("image") as File
+
+    if (!name || !title || !company || !description) {
+      return NextResponse.json(
+        { error: "Name, title, company, and description are required" },
+        { status: 400 }
+      )
+    }
 
     if (!imageFile) {
       return NextResponse.json(
@@ -49,6 +57,12 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Get the highest order value and add 1
+    const lastSpeaker = await prisma.speaker.findFirst({
+      orderBy: { order: 'desc' }
+    })
+    const newOrder = (lastSpeaker?.order ?? -1) + 1
 
     // Upload image to Vercel Blob
     const blob = await put(`speakers/${Date.now()}-${imageFile.name}`, imageFile, {
@@ -59,8 +73,10 @@ export async function POST(request: Request) {
       data: {
         name,
         title,
+        company,
         description,
         imageUrl: blob.url,
+        order: newOrder,
       },
     })
 

@@ -13,6 +13,10 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+
     const formData = await request.formData()
     const name = formData.get("name") as string
     const title = formData.get("title") as string

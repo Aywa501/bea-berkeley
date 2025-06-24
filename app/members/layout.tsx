@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { MembersNavbar } from "@/components/members-navbar"
 
 export default function MembersLayout({
   children,
@@ -22,9 +23,11 @@ export default function MembersLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 pt-24 pb-8">
-        {children}
-      </main>
+      <div className="mt-24">
+        <main className="container mx-auto px-4 pt-8 pb-8">
+          {children}
+        </main>
+      </div>
     </div>
   )
 } 

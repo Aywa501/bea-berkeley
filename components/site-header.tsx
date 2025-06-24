@@ -161,6 +161,14 @@ export function SiteHeader() {
                     >
                       BWIM
                     </Link>
+                    <Link
+                      href="/members"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                    >
+                      Members
+                    </Link>
                   </div>
                 </div>
               )}
@@ -279,6 +287,13 @@ export function SiteHeader() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           BWIM
+                        </Link>
+                        <Link
+                          href="/members"
+                          className="block text-sm text-gray-700"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Members
                         </Link>
                       </motion.div>
                     )}
